@@ -1,13 +1,98 @@
+//! A utility to simplify consuming paginated data sources as a `futures::Stream`.
+//!
+//! This crate provides the `Paginated` trait, which you implement for your API client
+//! or repository, and the `PagingStream` struct, which wraps your type and yields
+//! items as a stream. This allows consumers of your API to work with a continuous
+//! stream of data, abstracting away the underlying pagination logic.
+//!
+//! ## Example
+//!
+//! ```rust
+//! use futures::{StreamExt, future::Future};
+//! use paging_stream::{Paginated, PagingStream};
+//!
+//! // 1. Define a client/repository struct.
+//! struct MyApiClient;
+//!
+//! // 2. Define your types for parameters, items, and errors.
+//! struct MyParams {
+//!     since: usize,
+//!     until: usize,
+//!     limit: usize
+//! }
+//!
+//! // 3. Implement the `Paginated` trait for your client.
+//! impl Paginated for MyApiClient {
+//!     type Params = MyParams;
+//!     type Item = usize;
+//!     type Error = ();
+//!
+//!     fn fetch_page(
+//!         &self,
+//!         params: Self::Params,
+//!     ) -> impl Future<Output = Result<(Vec<Self::Item>, Option<Self::Params>), Self::Error>>
+//!     + Send
+//!     + 'static {
+//!         async move {
+//!             // Replace with your actual asynchronous data fetching logic.
+//!             //
+//!             // - `params`: Contains the necessary information to fetch the current page.
+//!             // - Return `Ok((items, next_params))` where:
+//!             //   - `items`: A `Vec` of fetched items for the current page.
+//!             //   - `next_params`: An `Option<Self::Params>`:
+//!             //     - `Some(params)`: Contains the parameters needed to fetch the *next* page.
+//!             //     - `None`: Signifies that there are no more pages.
+//!             // - Return `Err(your_error)` if fetching fails.
+//!            Ok((Vec::new(), None)) // Placeholder for example
+//!         }
+//!     }
+//! }
+//!
+//! async fn consume_as_stream() {
+//!     let client = MyApiClient;
+//!     let initial_params = MyParams {
+//!         since: 0,
+//!         until: 100,
+//!         limit: 20
+//!     };
+//!
+//!     // 4. Create a `PagingStream`.
+//!     let mut stream = PagingStream::new(client, initial_params);
+//!
+//!     // 5. Consume the stream.
+//!     while let Some(result) = stream.next().await {
+//!         match result {
+//!             Ok(item) => { /* process `item` */ }
+//!             Err(e) => { /* handle `e` */ break; }
+//!         }
+//!     }
+//! }
+//! ```
+
 use futures::Stream;
 use std::collections::VecDeque;
 use std::pin::Pin;
 use std::task::Poll;
 
+/// Represents a data source that can be paginated.
 pub trait Paginated {
+    /// The type of parameters used to request a page (e.g., page number, cursor, offset).
     type Params: Unpin;
+    /// The type of item that the stream will yield.
     type Item: Unpin;
+    /// The type of error that can occur during page fetching.
     type Error;
 
+    /// Asynchronously fetches a single page of items.
+    ///
+    /// This method takes the current `params` and should return a `Result` containing:
+    /// - `Ok((Vec<Self::Item>, Option<Self::Params>))`:
+    ///   - A `Vec` of items for the current page.
+    ///   - An `Option` for the next page's parameters. `Some(next_params)` indicates
+    ///     there might be more data, and `None` signifies the end of the data source.
+    /// - `Err(Self::Error)`: If an error occurs during fetching.
+    ///
+    /// The returned `Future` must be `Send + 'static`.
     fn fetch_page(
         &self,
         params: Self::Params,
@@ -16,9 +101,17 @@ pub trait Paginated {
     + 'static;
 }
 
-pub type MaybeInFlight<T, U, E> =
+type MaybeInFlight<T, U, E> =
     Option<Pin<Box<dyn Future<Output = Result<(Vec<T>, Option<U>), E>> + Send + 'static>>>;
 
+/// A stream that wraps a `Paginated` type to provide continuous, lazy-loaded data.
+///
+/// `PagingStream` handles the logic of fetching pages, buffering items, and
+/// managing the state of requests. It polls the `Paginated::fetch_page` method
+/// as needed when the stream is consumed.
+///
+/// # Type Parameters
+/// - `T`: The type that implements the `Paginated` trait. It must also be `Unpin`.
 pub struct PagingStream<T>
 where
     T: Paginated,
@@ -35,9 +128,14 @@ where
     T: Paginated,
     T: Unpin,
 {
-    pub fn new(client: T, params: T::Params) -> Self {
+    /// Creates a new `PagingStream`.
+    ///
+    /// # Arguments
+    /// * `client`: An instance of your type that implements `Paginated`.
+    /// * `params`: The initial parameters to fetch the first page.
+    pub fn new(paginated: T, params: T::Params) -> Self {
         Self {
-            client,
+            client: paginated,
             params: Some(params),
             buffer: VecDeque::new(),
             request: None,
