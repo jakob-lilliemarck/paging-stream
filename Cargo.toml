@@ -8,7 +8,7 @@ license = "MIT"
 documentation = "https://github.com/jakob-lilliemarck/paging-stream"
 repository = "https://github.com/jakob-lilliemarck/paging-stream"
 readme = "README.md"
-keywords = ["async", "stream", "pagination", "futures", "api", "batch"]
+keywords = ["async", "stream", "pagination", "futures"]
 categories = ["async-programming", "network-programming", "rust-patterns"]
 
 [dependencies]
