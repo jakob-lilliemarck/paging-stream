@@ -120,7 +120,7 @@ mod tests {
         });
     }
 
-    pub struct AsyncClient;
+    pub struct Repository;
 
     pub struct Params {
         since: usize,
@@ -128,7 +128,7 @@ mod tests {
         limit: usize,
     }
 
-    impl AsyncClient {
+    impl Repository {
         fn get_next_page_params(params: &Params, results: &[usize]) -> Option<Params> {
             results.last().map(|last| Params {
                 since: last + 1,
@@ -142,7 +142,7 @@ mod tests {
     const ERR_RANGE_START: usize = 200;
     const ERR_RANGE_END: usize = 500;
 
-    impl Paginated for AsyncClient {
+    impl Paginated for Repository {
         type Params = Params;
         type Item = usize;
         type Error = ();
@@ -192,7 +192,7 @@ mod tests {
         let limit = 100;
 
         let mut stream = PagingStream::new(
-            AsyncClient,
+            Repository,
             Params {
                 since,
                 until,
@@ -223,7 +223,7 @@ mod tests {
         let limit = 100;
 
         let mut stream = PagingStream::new(
-            AsyncClient,
+            Repository,
             Params {
                 since,
                 until,
@@ -254,7 +254,7 @@ mod tests {
         let limit = 10;
 
         let mut stream = PagingStream::new(
-            AsyncClient,
+            Repository,
             Params {
                 since,
                 until,
@@ -285,7 +285,7 @@ mod tests {
         let limit = 1;
 
         let mut stream = PagingStream::new(
-            AsyncClient,
+            Repository,
             Params {
                 since,
                 until,
@@ -306,7 +306,7 @@ mod tests {
         let limit = 0;
 
         let mut stream = PagingStream::new(
-            AsyncClient,
+            Repository,
             Params {
                 since,
                 until,
@@ -327,7 +327,7 @@ mod tests {
         let limit = 1;
 
         let mut stream = PagingStream::new(
-            AsyncClient,
+            Repository,
             Params {
                 since,
                 until,
@@ -353,7 +353,7 @@ mod tests {
         let limit = 1;
 
         let mut stream = PagingStream::new(
-            AsyncClient,
+            Repository,
             Params {
                 since,
                 until,

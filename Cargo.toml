@@ -2,6 +2,12 @@
 name = "paging-stream"
 version = "0.1.0"
 edition = "2024"
+description = "A utility to consume paginated data sources as a futures::Stream."
+license = "MIT"
+repository = "https://github.com/jakob-lilliemarck/paging-stream.git"
+readme = "README.md"
+keywords = ["async", "stream", "pagination", "futures", "api", "batch"]
+categories = ["async-programming", "network-programming", "rust-patterns"]
 
 [dependencies]
 futures = "0.3.31"
