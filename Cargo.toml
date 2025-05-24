@@ -1,0 +1,12 @@
+[package]
+name = "paging-stream"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+futures = "0.3.31"
+
+[dev-dependencies]
+tracing = "0.1.41"
+tokio = { version = "1.45.0", features = ["full"] }
+tracing-subscriber = { version = "0.3.19" }
