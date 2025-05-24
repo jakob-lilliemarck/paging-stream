@@ -9,7 +9,7 @@ documentation = "https://github.com/jakob-lilliemarck/paging-stream"
 repository = "https://github.com/jakob-lilliemarck/paging-stream"
 readme = "README.md"
 keywords = ["async", "stream", "pagination", "futures"]
-categories = ["asynchronous", "rust-patterns"]
+categories = ["asynchronous", "rust-patterns", "network-programming"]
 
 [dependencies]
 futures = "0.3.31"
